@@ -1,30 +1,68 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
-import { User, Lock, ArrowRight, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { createFileRoute, Link, useNavigate, redirect, useRouteContext, Router } from '@tanstack/react-router';
+import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AuthHeader } from '../components/Login/AuthHeader';
+import { LoginForm } from '../components/Login/LoginForm';
 
 export const Route = createFileRoute('/login')({
+    beforeLoad: ({ context }) => {
+        if (context.auth.isAuthenticated) {
+            throw redirect({ to: '/' });
+        }
+    },
     component: LoginComponent,
-})
+});
+
 
 function LoginComponent() {
-    const navigate = useNavigate()
-    const [isLoading, setIsLoading] = useState(false)
+    const navigate = useNavigate();
+    const { setUser, setAccessToken } = useRouteContext().auth;
     const [formData, setFormData] = useState({
         email: '',
-        password: ''
-    })
+        password: '',
+    });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setIsLoading(true)
+    const loginPageQuery = useQuery({
+        queryKey: ['loginPage'],
+        queryFn: async () => {
+            await new Promise((resolve) => setTimeout(resolve, 300));
+            return {
+                title: 'Welcome Back',
+                subtitle: 'Sign in to your account',
+            };
+        },
+    });
 
-        // Simulate API call
-        setTimeout(() => {
-            setIsLoading(false)
-            navigate({ to: '/' })
-        }, 1500)
-    }
+    const loginMutation = useMutation({
+        mutationFn: async (data: typeof formData) => {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            if (data.email === 'error@example.com') {
+                throw new Error('Invalid credentials');
+            }
+
+            const mockAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+
+            return {
+                success: true,
+                user: { email: data.email },
+                accessToken: mockAccessToken,
+            };
+        },
+        onSuccess: (data) => {
+            setAccessToken(data.accessToken);
+            setUser(data.user.email);
+            navigate({ to: '/' });
+        },
+    });
+
+    const handleSubmit = (formData: FormData) => {
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
+        loginMutation.mutate({ email, password });
+    };
+
+    const pageData = loginPageQuery.data || { title: 'Welcome Back', subtitle: 'Sign in to your account' };
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-50/50">
@@ -35,80 +73,14 @@ function LoginComponent() {
                 className="w-full max-w-md"
             >
                 <div className="minimal-card p-8 shadow-sm">
-                    <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold text-zinc-900 mb-2">Welcome Back</h1>
-                        <p className="text-zinc-500">Sign in to your account</p>
-                    </div>
+                    <AuthHeader title={pageData.title} subtitle={pageData.subtitle} />
 
-                    <form className="space-y-6" onSubmit={handleSubmit}>
-                        <div className="space-y-2">
-                            <label
-                                htmlFor="email"
-                                className="text-sm font-medium text-zinc-700 block"
-                            >
-                                Email Address
-                            </label>
-                            <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
-                                <input
-                                    type="email"
-                                    id="email"
-                                    value={formData.email}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                                    placeholder="name@example.com"
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all text-zinc-900 placeholder:text-zinc-400"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                                <label
-                                    htmlFor="password"
-                                    className="text-sm font-medium text-zinc-700"
-                                >
-                                    Password
-                                </label>
-                                <Link
-                                    to="/"
-                                    className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
-                                >
-                                    Forgot password?
-                                </Link>
-                            </div>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
-                                <input
-                                    type="password"
-                                    id="password"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                                    placeholder="••••••••"
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-zinc-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-900 transition-all text-zinc-900 placeholder:text-zinc-400"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full btn-primary flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Signing In...
-                                </>
-                            ) : (
-                                <>
-                                    Sign In
-                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                                </>
-                            )}
-                        </button>
-                    </form>
+                    <LoginForm
+                        formData={formData}
+                        setFormData={setFormData}
+                        action={handleSubmit}
+                        loginMutation={loginMutation}
+                    />
 
                     <div className="mt-8 pt-6 border-t border-zinc-100 text-center">
                         <p className="text-zinc-500 text-sm">
@@ -124,5 +96,5 @@ function LoginComponent() {
                 </div>
             </motion.div>
         </div>
-    )
+    );
 }

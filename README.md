@@ -281,3 +281,34 @@ Files prefixed with `demo` can be safely deleted. They are there to provide a st
 # Learn More
 
 You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+
+# API Reference
+
+This application communicates with a backend API (defaulting to `http://localhost:3000`). Authentication is handled via JWT (JSON Web Tokens) with a silent-refresh mechanism.
+
+## Authentication Flow
+
+1.  **Login**: User submits credentials to `/auth/login`. On success, the backend returns an `accessToken` (short-lived) and a `refreshToken` (long-lived).
+2.  **Storage**: The `accessToken` and `refreshToken` are stored in `localStorage`.
+3.  **Authorization**: The `fetchWithAuth` utility automatically attaches the `Authorization: Bearer <accessToken>` header to all requests.
+4.  **Silent Refresh**: If a request returns a `401 Unauthorized` status, the frontend attempts to refresh the access token using the `/auth/refresh` endpoint. If successful, it retries the original request seamlessly.
+
+## Endpoints
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/auth/login` | Authenticate user and receive tokens. |
+| `POST` | `/auth/register` | Create a new user account. |
+| `POST` | `/auth/refresh` | Exchange a refresh token for a new access token. |
+
+## Usage (`fetchWithAuth`)
+
+To make authenticated requests, use the `fetchWithAuth` utility located in `src/api.ts`:
+
+```tsx
+import { fetchWithAuth } from './api';
+
+const data = await fetchWithAuth('/users/profile');
+```
+
+This utility handles header injection, 401 interception, and concurrent request queuing during token refresh.

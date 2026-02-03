@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
+import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 import {
@@ -15,6 +15,14 @@ import {
 } from 'lucide-react';
 
 export const Route = createFileRoute('/')({
+    beforeLoad: ({ context }) => {
+        console.log(context);
+        if (!context?.auth?.isAuthenticated) {
+            throw redirect({
+                to: '/login',
+            });
+        }
+    },
     component: MinimalAIApp,
 });
 
@@ -119,7 +127,10 @@ function LibraryView({ files, onSelect }: { files: UploadedFile[]; onSelect: (f:
                     </p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <Link to="/login" className="px-6 py-3 text-zinc-600 font-medium hover:text-zinc-900 transition-colors">
+                    <Link
+                        to="/login"
+                        className="px-6 py-3 text-zinc-600 font-medium hover:text-zinc-900 transition-colors"
+                    >
                         Sign In
                     </Link>
                     <button className="flex items-center gap-2 px-8 py-3 bg-zinc-900 text-white rounded-full font-medium hover:bg-zinc-800 transition-all active:scale-95 shadow-sm">
@@ -206,7 +217,7 @@ function WorkspaceView({ file, onBack }: { file: UploadedFile; onBack: () => voi
                         <ArrowLeft size={18} />
                         <span>Back</span>
                     </button>
-                    <div className="h-4 w-[1px] bg-zinc-200" />
+                    <div className="h-4 w-px bg-zinc-200" />
                     <h2 className="text-sm font-semibold tracking-tight">{file.name}</h2>
                 </div>
                 <div className="flex items-center gap-4">
