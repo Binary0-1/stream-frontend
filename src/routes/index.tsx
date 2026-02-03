@@ -1,24 +1,16 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import {
-    FileText,
-    Video,
-    Mic,
-    MessageSquare,
     Upload,
     Play,
-    Clock,
     Sparkles,
-    Search,
     ArrowLeft,
     ChevronRight,
     Share2,
     Download,
-    MoreVertical,
     Send,
     Plus,
-    Circle,
     PlayCircle,
 } from 'lucide-react';
 
@@ -126,10 +118,15 @@ function LibraryView({ files, onSelect }: { files: UploadedFile[]; onSelect: (f:
                         Intelligent interpretation for your documents, audio, and video.
                     </p>
                 </div>
-                <button className="flex items-center gap-2 px-8 py-3 bg-zinc-900 text-white rounded-full font-medium hover:bg-zinc-800 transition-all active:scale-95 shadow-sm">
-                    <Plus size={20} />
-                    <span>Upload</span>
-                </button>
+                <div className="flex items-center gap-4">
+                    <Link to="/login" className="px-6 py-3 text-zinc-600 font-medium hover:text-zinc-900 transition-colors">
+                        Sign In
+                    </Link>
+                    <button className="flex items-center gap-2 px-8 py-3 bg-zinc-900 text-white rounded-full font-medium hover:bg-zinc-800 transition-all active:scale-95 shadow-sm">
+                        <Plus size={20} />
+                        <span>Upload</span>
+                    </button>
+                </div>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
